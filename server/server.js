@@ -72,11 +72,11 @@ app.put('/api/products/:id', (request, response) => {
     console.log('handle http post request')
 
     const id = Number(request.params.id)
-    //products = products.filter(product => product.id !== id)
+    //products = products.map(product => product.id !== id)
     //response.status(204).end()
 })
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
     app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
