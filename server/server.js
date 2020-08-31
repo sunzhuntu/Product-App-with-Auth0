@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 app.use(express.json())
@@ -7,76 +8,94 @@ app.use(cors())
 
 app.use(express.static('build'))
 
-let products = [
-    {id: 1, name:'UGG Womens Classic II Short Boot', category: 'Clothing', available: true},
-    {id: 2, name:'Dell Inspiron i3531-1200BK 15.6-Inch Laptop', category: 'Electronics', available: false},
-    {id: 3, name:'San Francisco Bay Coffee Breakfast Blend', category: 'Food', available: true}
-]
+const Product = require('../models/product')
 
 app.get('/', (request, response) => {
     response.send('<h1> this is a web server </h1>')
 })
   
 app.get('/api/products', (request, response) => {
-    response.json(products)
-    console.log('handle http get request')
+    Product.find({}).then(products => {
+      response.json(products)
+      console.log('handle http get request')
+    })
 })
 
-app.get('/api/products/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const product = products.find(product => product.id === id)
-    if (product){
+app.get('/api/products/:id', (request, response, next) => {
+    Product.findById(request.params.id).then(product => {
+      if (product){
         response.json(product)
-    }
-    else{
-        response.status(404).end()
-    }
+      } else {
+          response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
-app.delete('/api/products/:id', (request, response) => {
-    const id = Number(request.params.id)
-    products = products.filter(product => product.id !== id)
-    response.status(204).end()
+app.delete('/api/products/:id', (request, response, next) => {
+    Product.findByIdAndRemove(request.params.id)
+      .then(result => {
+        response.status(204).end()
+      })
+      .catch(error => next(error))
 })
 
+app.post('/api/products', (request, response, next) => {
+    const body = request.body
+    console.log('handle http post request')
+    console.log(body)
+  
+    const product = new Product({
+        title: body.title,
+        category: body.category,
+        available: Math.random > 0.5
+    })
+  
+    product.save().then(savedProduct => {
+      response.json(savedProduct.toJSON())
+    })
+    .catch(error => next(error))
+  })
 
-const generateId = () => {
-    const maxId = products.length > 0
-    ? Math.max(...products.map(p => p.id)) 
-    : 0
-    return maxId + 1
+app.put('/api/products/:id', (request, response, next) => {
+    const body = request.body
+  
+    const product = {
+        title: body.title,
+        category: body.category,
+        available: body.available
+    }
+  
+    Product.findByIdAndUpdate(request.params.id, product, { new: true })
+      .then(updatedProduct => {
+        response.json(updatedProduct)
+      })
+      .catch(error => next(error))
+})
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+  
+// handler of requests with unknown endpoint
+app.use(unknownEndpoint)
+
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError'){
+      return response.status(400).json({ error: error.message })
+    }
+    next(error)
 }
 
-app.post('/api/products', (request, response) => {
-    const body = request.body
-    console.log('handle http post request')
+app.use(errorHandler)
 
-    if (!body.name || !body.category) {
-        return response.status(400).json({ 
-            error: 'name or category missing' 
-        })
-    }
 
-    const product = {
-        id: generateId(),
-        name: body.name,
-        category: body.category
-    }
-
-    products = products.concat(product)
-    response.json(product)
-})
-
-app.put('/api/products/:id', (request, response) => {
-    const body = request.body
-    console.log('handle http post request')
-
-    const id = Number(request.params.id)
-    //products = products.map(product => product.id !== id)
-    //response.status(204).end()
-})
-
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT 
     app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })

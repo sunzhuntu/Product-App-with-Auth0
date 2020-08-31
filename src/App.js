@@ -25,7 +25,7 @@ const Display = ({product, changeAvailable}) => {
     : 'available'
   return(
     <li className='product'> 
-      {product.id} - {product.name} - {product.category}
+      {product.id} - {product.title} - {product.category}
       <Button eventHandler={changeAvailable}  text={text}/>
     </li>
   )
@@ -66,7 +66,7 @@ const App = () => {
     event.preventDefault()
     console.log('button clicked', event.target)
     const productObject = {
-      name: newProductName,
+      title: newProductName,
       category: newProductCategory,
       available: Math.random() > 0.5
     }
