@@ -1,24 +1,33 @@
 import axios from 'axios'
 const baseUrl = '/api/products'
 
+let token = null 
+
+const setToken = (newToken) => {
+    token = `bearer ${newToken}`
+}
+
 const getAll = () => {
     const request = axios.get(baseUrl)
     return request.then(response => response.data)
 }
 
-const createNote = (newProduct) => {
-    const request = axios.post(baseUrl, newProduct)
-    return request.then(response => response.data)
+const createProduct = async (newProduct) => {
+    const config = {
+      headers: { Authorization: token },
+    }
+    const response = await axios.post(baseUrl, newProduct, config)
+    return response.data
 }
 
-const updateNote = (id, changedProduct) => {
+const updateProduct = (id, changedProduct) => {
     const request = axios.put(`${baseUrl}/${id}`, changedProduct)
     return request.then(response => response.data)
 }
 
-export default {getAll, createNote, updateNote}
-// export default {
-//     getAll: getAll,
-//     createNote: createNote,
-//     updateNote: updateNote
-// }
+const deleteProduct = async (id) => {
+    const response =  await axios.delete(`${baseUrl}/${id}`)
+    return response.data
+}
+
+export default {getAll, createProduct, updateProduct, deleteProduct, setToken}

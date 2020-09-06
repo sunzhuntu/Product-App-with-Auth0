@@ -21,19 +21,6 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model('Product', productSchema)
 
-
-//Save data to MongoDB
-// const product = new Product({
-//   title: 'San Francisco Bay Coffee Breakfast Blend',
-//   category: 'Food',
-//   available: false,
-// })
-
-// product.save().then(result => {
-//   console.log('product saved!')
-//   mongoose.connection.close()
-// })
-
 //Find data from MongoDB
 Product.find({available: true}).then(result => {
     result.forEach( product => {

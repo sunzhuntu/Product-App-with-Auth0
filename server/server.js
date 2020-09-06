@@ -1,21 +1,39 @@
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
+
 const express = require('express')
 const app = express()
 app.use(express.json())
+app.use(express.static('build'))
 
 const cors = require('cors')
 app.use(cors())
 
-app.use(express.static('build'))
-
 const Product = require('../models/product')
+const User = require('../models/user')
+
+const loginRouter = require('../controllers/login')
+app.use('/api/login', loginRouter)
+
+const usersRouter = require('../controllers/users')
+app.use('/api/users', usersRouter)
+
+const getTokenFrom = request => {
+    const authorization = request.get('authorization')
+    if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+      return authorization.substring(7)
+    }
+    return null
+}
+
 
 app.get('/', (request, response) => {
     response.send('<h1> this is a web server </h1>')
 })
   
 app.get('/api/products', (request, response) => {
-    Product.find({}).then(products => {
+    Product.find({}).populate('user', {username:1, name:1})
+    .then(products => {
       response.json(products)
       console.log('handle http get request')
     })
@@ -40,22 +58,31 @@ app.delete('/api/products/:id', (request, response, next) => {
       .catch(error => next(error))
 })
 
-app.post('/api/products', (request, response, next) => {
+app.post('/api/products', async (request, response, next) => {
     const body = request.body
     console.log('handle http post request')
     console.log(body)
   
+    const token = getTokenFrom(request)
+    const decodedToken = jwt.verify(token, process.env.SECRET)
+    if (!token || !decodedToken.id) {
+        return response.status(401).json({ error: 'token missing or invalid' })
+    }
+    const user = await User.findById(decodedToken.id)
     const product = new Product({
         title: body.title,
         category: body.category,
-        available: Math.random > 0.5
+        available: Math.random > 0.5,
+        user: user._id
     })
-  
+
     product.save().then(savedProduct => {
+      user.products = user.products.concat(savedProduct._id)
+      user.save()
       response.json(savedProduct.toJSON())
     })
     .catch(error => next(error))
-  })
+})
 
 app.put('/api/products/:id', (request, response, next) => {
     const body = request.body
@@ -88,6 +115,8 @@ const errorHandler = (error, request, response, next) => {
       return response.status(400).send({ error: 'malformatted id' })
     } else if (error.name === 'ValidationError'){
       return response.status(400).json({ error: error.message })
+    } else if (error.name === 'JsonWebTokenError'){
+      return response.status(401).json({error: 'invalid token'})
     }
     next(error)
 }

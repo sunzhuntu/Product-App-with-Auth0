@@ -1,158 +1,110 @@
 import React, {useState, useEffect} from 'react';
-import logo from './logo.svg';
 import './App.css';
 import productService from './services/products'
+import LoginForm from './components/LoginForm'
+import Users from './components/Users'
+import Home from './components/Home'
+import Products from './components/Products'
+import Product from './components/Product'
+import Button from './components/Button'
+
+import {
+  BrowserRouter as Router,
+  Switch, Route, Link, Redirect
+} from "react-router-dom"
 
 
-const Button = ({eventHandler, text}) => {
-  const buttonStyle = {
-    backgroundColor: 'white',
-    color: 'black',
-    padding: 4,
-    margin: 4,
-    fontSize: 16,
-    cursor: 'pointer',
-    fontStyle: 'italic',
-    borderRadius: 12
-  }
-  return <button style={buttonStyle} onClick={eventHandler}> {text} </button>
+const footerStyle = {
+  backgroundColor: 'white',
+  color: 'black',
+  padding: 20,
+  margin: 20,
+  fontSize: 12
 }
 
-
-const Display = ({product, changeAvailable}) => {
-  const text = product.available
-    ? 'sold out'
-    : 'available'
-  return(
-    <li className='product'> 
-      {product.id} - {product.title} - {product.category}
-      <Button eventHandler={changeAvailable}  text={text}/>
-    </li>
-  )
+const padding = {
+  padding: 20,
+  margin: 20,
+  color: 'black',
+  fontSize: 20
 }
 
-const Notification = ({ message }) => {
-  if (message === null) {
-    return null
-  }
-  return (
-    <div className="error">
-      {message}
-    </div>
-  )
-}
- 
 const App = () => {
   const [products, setProducts] = useState([])
-  const [newProductName, setNewProductName] = useState ('a new product name')
-  const [newProductCategory, setNewProductCategory] = useState ('a new product category')
-  const [showAllProducts, setShowAllProducts] = useState(true)
-  const [errorMessage, setErrorMessage] = useState('no error happened...')
+  const [user, setUser] = useState(null)
 
   //load all existing products from the server
-  const hook = () => {
+  useEffect(() => {
     console.log('effect')
     productService
       .getAll()
-      .then (initialNotes => {
+      .then (initialProducts => {
         console.log('promoise fulfilled')
-        setProducts(initialNotes)
+        setProducts(initialProducts)
       })
-  }
-  useEffect(hook, [])
+  }, [])
 
-  //add new product
-  const addProduct = (event) => {
-    event.preventDefault()
-    console.log('button clicked', event.target)
-    const productObject = {
-      title: newProductName,
-      category: newProductCategory,
-      available: Math.random() > 0.5
-    }
-
-    productService
-      .createNote(productObject)
-      .then(returnedProduct => {
-        console.log(returnedProduct)
-        setProducts(products.concat(returnedProduct))
-        setNewProductName('a new product name')
-        setNewProductCategory('a new product category')
-    })
+  //handle logout
+  const logoutHandler = () => {
+    setUser(null)
   }
 
-  const handleProductNameChange = (event) => {
-    console.log(event.target.value)
-    setNewProductName(event.target.value)
+  //handle user login
+  const userLoginHandler = (user) => {
+    setUser(user)
   }
 
-  const handleProductCategoryChange = (event) => {
-    console.log(event.target.value)
-    setNewProductCategory(event.target.value)
-  }
-
-  //change the availability of the product
-  const changeAvailableOf = (id) => {
-    console.log('the availability of ', id, 'needs to be changed')
-    const product = products.find(p => p.id === id)
-    const changedProduct = {...product, available: !product.available}
-    productService
-      .updateNote(id, changedProduct)
-      .then(returnedProduct => {
-        setProducts(products.map(product => 
-          product.id !== id
-            ? product
-            : returnedProduct
-        ))
-      })
-      .catch(error => {
-        setErrorMessage('the product was already deleted from server')
-        setTimeout(() => {
-          setErrorMessage('no errors happened')
-        }, 5000)
-        setProducts(products.filter(p => p.id !== id))
-      })
-  }
-
-  //show products with constraint
-  const productsToShow = showAllProducts
-  ? products
-  : products.filter(product => product.category === 'Electronics')
-  
-  const displayControl = () => {
-      setShowAllProducts(!showAllProducts)
+  //update products
+  const updateProductHandler = (updatedProducts) => {
+    setProducts(updatedProducts)
   }
 
   console.log('render', products.length, 'products')
 
   return (
     <div>
-      <div> 
-        <h3> Display existing products </h3>
-        <Notification message={errorMessage}/>
-        <Button eventHandler={displayControl} text={`Show ${showAllProducts? 'Electronics' : 'All'}` }/>
-        <ul>
-          {productsToShow.map(product => 
-            <Display key={product.id} product={product} changeAvailable={() => changeAvailableOf(product.id)}/>
-          )}
-        </ul>
-      </div>
-      <div>
-      <h3> Adding new products </h3>
-      <form onSubmit={addProduct}>
-        <input 
-        value={newProductName}
-        onChange={handleProductNameChange}
-        />
-        <input 
-        value={newProductCategory}
-        onChange={handleProductCategoryChange}
-        />
-        <button type="submit"> Save </button>
-      </form>
-      </div>
+      <Router>
+        <div>
+            <Link style={padding} to="/">home</Link>
+            <Link style={padding} to="/products">products</Link>
+            <Link style={padding} to="/users">users</Link>
+            {user !== null
+              ? <span>
+                  <em> {user.name} logged in </em> 
+                  <Button eventHandler={logoutHandler} text="logout"/>
+                </span>
+              : <Link style={padding} to="/login">login</Link>
+            }
+        </div>
+        
+        <Switch>
+            <Route path="/products/:id">
+              <Product products={products} />
+            </Route>
+            <Route path="/products">
+              <Products products={products} user={user} updateProductHandler={updateProductHandler} />
+            </Route>
+            <Route path="/login">
+              <LoginForm user={user} userLoginHandler={userLoginHandler}/>
+            </Route>
+            <Route path="/users">
+              {user ? <Users /> : <Redirect to="/login" />}
+            </Route>
+            <Route path="/">
+              <Home user={user}/>
+            </Route>
+        </Switch>
+      </Router>
+
+      <footer style={footerStyle}>
+        <i> Product App, Department of Computing </i>
+        <br/><i> {Date()}</i>
+      </footer>
     </div>
-  );
+  )
 }
 
 export default App;
+
+
+    

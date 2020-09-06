@@ -23,7 +23,11 @@ const productSchema = new mongoose.Schema({
       minlength: 2,
       required: true
     },
-    available: Boolean
+    available: Boolean,
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
 })
   
 productSchema.set('toJSON', {

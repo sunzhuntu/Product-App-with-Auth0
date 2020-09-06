@@ -1,9 +1,0 @@
-PUT http://localhost:3001/api/products/5f4b920bdf6f45530cb2a494
-Content-Type: application/json
-
-{
-    "title": "San Francisco Bay Coffee Breakfast Blend",
-    "category": "Food",
-    "available": true,
-    "id": "5f4b920bdf6f45530cb2a494"
-}
