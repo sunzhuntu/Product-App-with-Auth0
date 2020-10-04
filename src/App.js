@@ -1,17 +1,16 @@
 import React, {useState, useEffect} from 'react';
 import './App.css';
 import productService from './services/products'
-import LoginForm from './components/LoginForm'
 import Users from './components/Users'
 import Home from './components/Home'
 import Products from './components/Products'
 import Product from './components/Product'
 import Button from './components/Button'
-
 import {
   BrowserRouter as Router,
-  Switch, Route, Link, Redirect
+  Switch, Route, Link
 } from "react-router-dom"
+import { useAuth0 } from "@auth0/auth0-react";
 
 
 const footerStyle = {
@@ -32,6 +31,7 @@ const padding = {
 const App = () => {
   const [products, setProducts] = useState([])
   const [user, setUser] = useState(null)
+  const {isAuthenticated, loginWithRedirect, logout} = useAuth0()
 
   //load all existing products from the server
   useEffect(() => {
@@ -44,16 +44,6 @@ const App = () => {
       })
   }, [])
 
-  //handle logout
-  const logoutHandler = () => {
-    setUser(null)
-  }
-
-  //handle user login
-  const userLoginHandler = (user) => {
-    setUser(user)
-  }
-
   //update products
   const updateProductHandler = (updatedProducts) => {
     setProducts(updatedProducts)
@@ -65,16 +55,17 @@ const App = () => {
     <div>
       <Router>
         <div>
-            <Link style={padding} to="/">home</Link>
-            <Link style={padding} to="/products">products</Link>
-            <Link style={padding} to="/users">users</Link>
-            {user !== null
-              ? <span>
-                  <em> {user.name} logged in </em> 
-                  <Button eventHandler={logoutHandler} text="logout"/>
-                </span>
-              : <Link style={padding} to="/login">login</Link>
-            }
+          <Link style={padding} to="/">home</Link>
+          {!isAuthenticated && (
+            <Button text="log in" eventHandler={() => loginWithRedirect()}/>
+          )}
+          {isAuthenticated && (
+          <span>  
+              <Link style={padding} to="/products"> products </Link>
+              <Link style={padding} to="/users"> users </Link>
+              <Button text="log out" eventHandler={() => logout()}/>
+          </span> 
+          )}
         </div>
         
         <Switch>
@@ -84,18 +75,14 @@ const App = () => {
             <Route path="/products">
               <Products products={products} user={user} updateProductHandler={updateProductHandler} />
             </Route>
-            <Route path="/login">
-              <LoginForm user={user} userLoginHandler={userLoginHandler}/>
-            </Route>
             <Route path="/users">
-              {user ? <Users /> : <Redirect to="/login" />}
+              <Users />
             </Route>
             <Route path="/">
               <Home user={user}/>
             </Route>
         </Switch>
       </Router>
-
       <footer style={footerStyle}>
         <i> Product App, Department of Computing </i>
         <br/><i> {Date()}</i>

@@ -31,7 +31,11 @@ const Products = ({products, user, updateProductHandler}) => {
             {products.map(product => 
               <li key={product.id}>
                 <Link to={`/products/${product.id}`}>{product.title}</Link>
-                <Button text="Delete" eventHandler={() => deleteProduct(product.id)}/> 
+                {
+                  user !== null
+                  ? <Button text="Delete" eventHandler={() => deleteProduct(product.id)}/> 
+                  : null
+                }
               </li>
             )}
         </ul>

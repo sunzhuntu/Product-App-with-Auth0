@@ -62,7 +62,6 @@ app.post('/api/products', async (request, response, next) => {
     const body = request.body
     console.log('handle http post request')
     console.log(body)
-  
     const token = getTokenFrom(request)
     const decodedToken = jwt.verify(token, process.env.SECRET)
     if (!token || !decodedToken.id) {
@@ -75,7 +74,6 @@ app.post('/api/products', async (request, response, next) => {
         available: Math.random > 0.5,
         user: user._id
     })
-
     product.save().then(savedProduct => {
       user.products = user.products.concat(savedProduct._id)
       user.save()
