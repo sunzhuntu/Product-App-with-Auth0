@@ -1,0 +1,6 @@
+{
+  "domain": "dev-6dl8kweb.au.auth0.com",
+  "clientId": "kfirb2H5xkxRaIVSgKu3YHmuIXv7Op5r",
+  "audience" : "https://dev-6dl8kweb.au.auth0.com/api/v2/",
+  "scope" : "read:current_user update:current_user_metadata"
+}

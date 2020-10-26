@@ -4,12 +4,16 @@ import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import { Auth0Provider } from "@auth0/auth0-react";
+import AuthConfig from "./auth_config.json";
+
 
 ReactDOM.render(
   <Auth0Provider
-    domain="dev-6dl8kweb.au.auth0.com"
-    clientId="kfirb2H5xkxRaIVSgKu3YHmuIXv7Op5r"
+    domain={AuthConfig.domain}
+    clientId={AuthConfig.clientId}
     redirectUri={window.location.origin}
+    audience={AuthConfig.audience}
+    scope={AuthConfig.scope}
   >
     <App />
   </Auth0Provider>,
